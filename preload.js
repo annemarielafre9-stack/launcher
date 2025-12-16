@@ -57,6 +57,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('update-progress', (event, data) => callback(data));
   },
 
+  // Provider auto-detection
+  detectProvider: () => ipcRenderer.invoke('detect-provider'),
+  getDetectedProvider: () => ipcRenderer.invoke('get-detected-provider'),
+  resetProviderDetection: () => ipcRenderer.invoke('reset-provider-detection'),
+  onProviderDetected: (callback) => {
+    ipcRenderer.on('provider-detected', (event, data) => callback(data));
+  },
+
   // Платформа
   platform: process.platform
 });

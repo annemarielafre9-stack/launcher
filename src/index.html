@@ -296,35 +296,69 @@
     </div>
   </div>
 
-  <!-- Telegram Verification Modal -->
-  <div class="modal" id="telegramModal">
-    <div class="sheet telegram-sheet">
-      <h2>📱 Обязательное подтверждение доступа</h2>
-      <div class="telegram-content">
-        <p><strong>Для использования лаунчера необходимо подписаться на наш Telegram канал и подтвердить подписку.</strong></p>
-        <p style="margin-top: 8px; font-size: 0.9em; opacity: 0.8;">Это окно нельзя закрыть до подтверждения.</p>
-        
-        <div class="telegram-steps">
-          <div class="step">
-            <span class="step-num">1</span>
-            <span>Подпишитесь на канал <a href="#" id="openTelegramChannel" class="telegram-link">@channel</a></span>
+  <!-- Telegram Verification Fullscreen Blocker -->
+  <div class="telegram-blocker" id="telegramBlocker" style="display: none;">
+    <div class="telegram-blocker-overlay"></div>
+    <div class="telegram-blocker-content">
+      <div class="telegram-blocker-icon">🔒</div>
+      <h1 class="telegram-blocker-title">Требуется подтверждение</h1>
+      <p class="telegram-blocker-subtitle">Для использования лаунчера необходимо подписаться на наш Telegram канал</p>
+      
+      <div class="telegram-blocker-card">
+        <div class="telegram-steps-modern">
+          <div class="step-modern">
+            <div class="step-icon">1</div>
+            <div class="step-content">
+              <div class="step-title">Подпишитесь на канал</div>
+              <a href="#" id="openTelegramChannel" class="telegram-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                </svg>
+                <span id="telegramChannelName">@channel</span>
+              </a>
+            </div>
           </div>
-          <div class="step">
-            <span class="step-num">2</span>
-            <span>Напишите боту <a href="#" id="openTelegramBot" class="telegram-link">@bot</a> команду /verify</span>
+          
+          <div class="step-modern">
+            <div class="step-icon">2</div>
+            <div class="step-content">
+              <div class="step-title">Получите код верификации</div>
+              <a href="#" id="openTelegramBot" class="telegram-button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+                <span id="telegramBotName">@bot</span>
+              </a>
+              <div class="step-note">Отправьте команду /verify</div>
+            </div>
           </div>
-          <div class="step">
-            <span class="step-num">3</span>
-            <span>Введите полученный код ниже</span>
+          
+          <div class="step-modern">
+            <div class="step-icon">3</div>
+            <div class="step-content">
+              <div class="step-title">Введите код</div>
+              <input type="text" id="telegramCode" class="telegram-input-modern" placeholder="Введите код верификации" autocomplete="off">
+              <div class="telegram-error-modern" id="telegramError"></div>
+            </div>
           </div>
         </div>
         
-        <input type="text" id="telegramCode" placeholder="Введите код верификации" autocomplete="off">
-        <div class="telegram-error" id="telegramError"></div>
+        <button class="btn-verify-modern" id="telegramVerify">
+          <span>Подтвердить подписку</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 11 12 14 22 4"></polyline>
+            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+          </svg>
+        </button>
       </div>
-      <div class="actions">
-        <button class="btn ghost" id="telegramCancel">Позже</button>
-        <button class="btn primary" id="telegramVerify">Подтвердить</button>
+      
+      <div class="telegram-blocker-footer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Это окно нельзя закрыть до подтверждения подписки</span>
       </div>
     </div>
   </div>
