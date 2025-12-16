@@ -1,34 +1,36 @@
 /**
  * Telegram Verification UI Module
- * Управление модальным окном верификации Telegram
+ * Управление fullscreen блокирующим окном верификации Telegram
  */
 
 const TelegramUI = {
   elements: {
-    modal: null,
+    blocker: null,
     codeInput: null,
     verifyBtn: null,
-    cancelBtn: null,
     errorDiv: null,
     channelLink: null,
-    botLink: null
+    botLink: null,
+    channelName: null,
+    botName: null
   },
 
   // Статус верификации
   isVerified: false,
   
-  // Флаг обязательной верификации
-  mandatoryMode: false,
+  // Флаг обязательной верификации (всегда true для fullscreen blocker)
+  mandatoryMode: true,
 
   async init() {
-    // Получаем элементы
-    this.elements.modal = document.getElementById('telegramModal');
+    // Получаем элементы нового fullscreen blocker
+    this.elements.blocker = document.getElementById('telegramBlocker');
     this.elements.codeInput = document.getElementById('telegramCode');
     this.elements.verifyBtn = document.getElementById('telegramVerify');
-    this.elements.cancelBtn = document.getElementById('telegramCancel');
     this.elements.errorDiv = document.getElementById('telegramError');
     this.elements.channelLink = document.getElementById('openTelegramChannel');
     this.elements.botLink = document.getElementById('openTelegramBot');
+    this.elements.channelName = document.getElementById('telegramChannelName');
+    this.elements.botName = document.getElementById('telegramBotName');
 
     // Проверяем статус при загрузке
     if (window.electronAPI) {
@@ -36,9 +38,9 @@ const TelegramUI = {
       await this.loadLinks();
       this.setupEventListeners();
       
-      // Показываем модальное окно при старте, если не верифицирован
+      // Показываем fullscreen blocker при старте, если не верифицирован
       if (!this.isVerified) {
-        this.showModal(true); // true = mandatory mode
+        this.showBlocker();
       }
     }
   },
@@ -52,13 +54,19 @@ const TelegramUI = {
         const links = await window.electronAPI.getTelegramLinks();
         
         if (this.elements.channelLink) {
-          this.elements.channelLink.textContent = '@' + links.channelUsername;
           this.elements.channelLink.dataset.url = links.channel;
         }
         
+        if (this.elements.channelName) {
+          this.elements.channelName.textContent = '@' + links.channelUsername;
+        }
+        
         if (this.elements.botLink) {
-          this.elements.botLink.textContent = '@' + links.botUsername;
           this.elements.botLink.dataset.url = links.bot;
+        }
+        
+        if (this.elements.botName) {
+          this.elements.botName.textContent = '@' + links.botUsername;
         }
       } catch (e) {
         console.log('Failed to load Telegram links:', e);
@@ -94,27 +102,9 @@ const TelegramUI = {
       this.elements.verifyBtn.addEventListener('click', () => this.verify());
     }
 
-    // Кнопка отмены - работает только если не обязательная верификация
-    if (this.elements.cancelBtn) {
-      this.elements.cancelBtn.addEventListener('click', () => {
-        if (!this.mandatoryMode) {
-          this.hideModal();
-        }
-      });
-    }
-
-    // Клик вне модального окна - работает только если не обязательная верификация
-    if (this.elements.modal) {
-      this.elements.modal.addEventListener('click', (e) => {
-        if (e.target === this.elements.modal && !this.mandatoryMode) {
-          this.hideModal();
-        }
-      });
-    }
-    
-    // Блокируем Escape если обязательная верификация
+    // Блокируем Escape в обязательном режиме (fullscreen blocker всегда обязательный)
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.mandatoryMode && this.elements.modal?.classList.contains('open')) {
+      if (e.key === 'Escape' && this.mandatoryMode && this.elements.blocker?.classList.contains('show')) {
         e.preventDefault();
         e.stopPropagation();
       }
@@ -156,10 +146,10 @@ const TelegramUI = {
       });
     }
 
-    // Слушаем событие от main процесса для показа модального окна
+    // Слушаем событие от main процесса для показа блокирующего окна
     if (window.electronAPI && window.electronAPI.onShowTelegramModal) {
       window.electronAPI.onShowTelegramModal(() => {
-        this.showModal();
+        this.showBlocker();
       });
     }
     
@@ -185,7 +175,8 @@ const TelegramUI = {
     // Блокируем кнопку
     if (this.elements.verifyBtn) {
       this.elements.verifyBtn.disabled = true;
-      this.elements.verifyBtn.textContent = 'Проверка...';
+      const originalHTML = this.elements.verifyBtn.innerHTML;
+      this.elements.verifyBtn.innerHTML = '<span>Проверка...</span>';
     }
 
     this.clearError();
@@ -195,9 +186,8 @@ const TelegramUI = {
 
       if (result.success) {
         this.isVerified = true;
-        this.mandatoryMode = false; // Выключаем обязательный режим после успеха
         Toast.show('Доступ подтвержден!', 'success');
-        this.hideModal();
+        this.hideBlocker();
         
         // Очищаем поле
         if (this.elements.codeInput) {
@@ -214,7 +204,7 @@ const TelegramUI = {
     // Разблокируем кнопку
     if (this.elements.verifyBtn) {
       this.elements.verifyBtn.disabled = false;
-      this.elements.verifyBtn.textContent = 'Подтвердить';
+      this.elements.verifyBtn.innerHTML = '<span>Подтвердить подписку</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path></svg>';
     }
   },
 
@@ -239,49 +229,42 @@ const TelegramUI = {
   },
 
   /**
-   * Показать модальное окно
-   * @param {boolean} mandatory - Обязательная верификация (нельзя закрыть)
+   * Показать fullscreen блокирующее окно
    */
-  showModal(mandatory = false) {
-    this.mandatoryMode = mandatory;
-    
-    if (this.elements.modal) {
-      this.elements.modal.classList.add('open');
-      
-      // Скрываем/показываем кнопку "Позже" в зависимости от режима
-      if (this.elements.cancelBtn) {
-        this.elements.cancelBtn.style.display = mandatory ? 'none' : 'block';
-      }
+  showBlocker() {
+    if (this.elements.blocker) {
+      this.elements.blocker.style.display = 'flex';
+      // Небольшая задержка для анимации
+      setTimeout(() => {
+        this.elements.blocker.classList.add('show');
+      }, 10);
       
       // Фокус на поле ввода
       setTimeout(() => {
         this.elements.codeInput?.focus();
-      }, 100);
+      }, 400);
     }
   },
 
   /**
-   * Скрыть модальное окно
-   * Не закрывается если включен обязательный режим
+   * Скрыть fullscreen блокирующее окно
+   * Скрывается только после успешной верификации
    */
-  hideModal() {
-    // Блокируем закрытие в обязательном режиме
-    if (this.mandatoryMode) {
-      console.log('Cannot close modal in mandatory mode');
-      return;
-    }
-    
-    if (this.elements.modal) {
-      this.elements.modal.classList.remove('open');
+  hideBlocker() {
+    if (this.elements.blocker && this.isVerified) {
+      this.elements.blocker.classList.remove('show');
+      setTimeout(() => {
+        this.elements.blocker.style.display = 'none';
+      }, 300);
     }
   },
 
   /**
-   * Принудительно показать модальное окно (для вызова из других модулей)
+   * Проверить верификацию (для вызова из других модулей)
    */
   requireVerification() {
     if (!this.isVerified) {
-      this.showModal(true); // Показываем в обязательном режиме
+      this.showBlocker();
       return false;
     }
     return true;
@@ -292,7 +275,7 @@ const TelegramUI = {
    */
   revokeAccess() {
     this.isVerified = false;
-    this.showModal(true); // Показываем модальное окно в обязательном режиме
+    this.showBlocker();
     Toast.show('Доступ отозван. Пожалуйста, подтвердите подписку.', 'error');
   }
 };

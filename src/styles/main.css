@@ -1642,6 +1642,295 @@ select:focus, input[type="text"]:focus {
 }
 
 /* ========================================
+   Telegram Fullscreen Blocker
+   ======================================== */
+
+.telegram-blocker {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.telegram-blocker.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.telegram-blocker-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(10, 11, 15, 0.97) 0%, rgba(26, 27, 46, 0.98) 50%, rgba(10, 11, 15, 0.97) 100%);
+  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+}
+
+.telegram-blocker-content {
+  position: relative;
+  z-index: 1;
+  max-width: 540px;
+  width: 90%;
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: blockerSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes blockerSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.telegram-blocker-icon {
+  font-size: 72px;
+  margin-bottom: 24px;
+  animation: blockerIconPulse 3s ease-in-out infinite;
+}
+
+@keyframes blockerIconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.telegram-blocker-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  letter-spacing: 0.5px;
+}
+
+.telegram-blocker-subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+  max-width: 420px;
+}
+
+.telegram-blocker-card {
+  width: 100%;
+  background: var(--panel);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+.telegram-steps-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.step-modern {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.step-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.step-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.telegram-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #0088cc, #00a8e8);
+  border-radius: var(--radius);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 136, 204, 0.3);
+}
+
+.telegram-button:hover {
+  background: linear-gradient(135deg, #0099e6, #00b8ff);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+}
+
+.telegram-button svg {
+  flex-shrink: 0;
+}
+
+.step-note {
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.telegram-input-modern {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 16px;
+  letter-spacing: 3px;
+  text-align: center;
+  text-transform: uppercase;
+  background: var(--bg-1);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.telegram-input-modern:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+  transform: scale(1.02);
+}
+
+.telegram-input-modern::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.5;
+}
+
+.telegram-error-modern {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--radius);
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  display: none;
+  animation: errorShake 0.4s ease;
+}
+
+.telegram-error-modern.visible {
+  display: block;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
+.btn-verify-modern {
+  width: 100%;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, var(--green), var(--green-2));
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 32px var(--green-glow);
+  font-family: inherit;
+}
+
+.btn-verify-modern:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px var(--green-glow);
+  filter: brightness(1.1);
+}
+
+.btn-verify-modern:active {
+  transform: translateY(0);
+}
+
+.btn-verify-modern:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.telegram-blocker-footer {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 12px 20px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius);
+}
+
+.telegram-blocker-footer svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* Light theme adjustments */
+[data-theme='light'] .telegram-blocker-overlay {
+  background: linear-gradient(135deg, rgba(248, 250, 252, 0.97) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(248, 250, 252, 0.97) 100%);
+}
+
+[data-theme='light'] .telegram-blocker-title {
+  color: var(--text);
+  text-shadow: none;
+}
+
+[data-theme='light'] .telegram-blocker-subtitle {
+  color: var(--muted);
+}
+
+/* ========================================
    Responsive
    ======================================== */
 
@@ -1673,5 +1962,17 @@ select:focus, input[type="text"]:focus {
   
   .main-logo {
     font-size: 36px;
+  }
+  
+  .telegram-blocker-content {
+    padding: 32px 24px;
+  }
+  
+  .telegram-blocker-card {
+    padding: 24px 20px;
+  }
+  
+  .telegram-blocker-title {
+    font-size: 24px;
   }
 }

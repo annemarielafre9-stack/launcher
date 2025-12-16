@@ -61,6 +61,12 @@ const NetworkMode = {
       window.electronAPI.onNetworkStatus((data) => {
         this.updateStatus(data);
       });
+      
+      // Слушаем событие автоопределения провайдера
+      window.electronAPI.onProviderDetected((data) => {
+        console.log('Provider auto-detected:', data.provider, 'Mode:', data.mode);
+        Toast.show(`Определен провайдер: ${data.provider}. Выбран оптимальный режим.`, 'success');
+      });
     }
   },
 

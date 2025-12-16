@@ -12,6 +12,8 @@ const { getBypassConfig, getAvailableModes: getEmbeddedModes } = require('./lib/
 const GameFilter = require('./lib/game-filter');
 // Конфигурация
 const config = require('./lib/config');
+// Автоопределение провайдера
+const ProviderDetector = require('./lib/provider-detector');
 
 const store = new Store();
 
@@ -357,7 +359,7 @@ function startBypassDirect(bypassPath, mode) {
  */
 function startBypass(mode = null) {
   const bypassPath = getBypassPath();
-  const selectedMode = mode || store.get('bypassMode', 'general');
+  const selectedMode = mode || store.get('bypassMode', 'ALT7');
 
   console.log('=== Starting Network Mode ===');
   console.log('Path:', bypassPath);
@@ -496,10 +498,42 @@ function killAllWinws() {
   });
 }
 
-// Автозапуск bypass при старте приложения
+// Автозапуск bypass при старте приложения с автоопределением провайдера
 async function autoStartBypass() {
   const bypassEnabled = store.get('bypassEnabled', true);
   if (bypassEnabled && checkBypassFiles()) {
+    // Проверяем, было ли уже автоопределение провайдера
+    const providerDetected = store.get('providerDetected', false);
+    
+    if (!providerDetected) {
+      console.log('First launch - auto-detecting ISP provider...');
+      try {
+        const recommendation = await ProviderDetector.getRecommendedBypassMode();
+        
+        if (recommendation.autoDetected) {
+          // Сохраняем определенный режим
+          store.set('bypassMode', recommendation.mode);
+          store.set('detectedProvider', recommendation.provider);
+          store.set('providerDetected', true);
+          
+          console.log('Auto-detected provider:', recommendation.provider);
+          console.log('Set optimal mode:', recommendation.mode);
+          
+          if (mainWindow) {
+            mainWindow.webContents.send('provider-detected', {
+              provider: recommendation.provider,
+              mode: recommendation.mode
+            });
+          }
+        } else {
+          // Не удалось определить - используем режим по умолчанию
+          store.set('providerDetected', true);
+        }
+      } catch (error) {
+        console.error('Provider detection failed:', error);
+      }
+    }
+    
     // winws.exe уже убит при старте лаунчера, просто запускаем свой
     setTimeout(() => {
       startBypass();
@@ -518,7 +552,7 @@ ipcMain.handle('get-settings', () => {
   return {
     theme: store.get('theme', 'dark'),
     bypassEnabled: store.get('bypassEnabled', true),
-    bypassMode: store.get('bypassMode', 'general'),
+    bypassMode: store.get('bypassMode', 'ALT7'),
     autostart: store.get('autostart', false),
     minimizeToTray: store.get('minimizeToTray', true),
     robloxProfile: store.get('robloxProfile', null)
@@ -694,7 +728,7 @@ ipcMain.handle('get-network-status', async () => {
   return {
     running: isRunning,
     available: checkBypassFiles(),
-    mode: store.get('bypassMode', 'general')
+    mode: store.get('bypassMode', 'ALT7')
   };
 });
 
@@ -708,7 +742,7 @@ ipcMain.handle('get-bypass-status', async () => {
   return {
     running: isRunning,
     available: checkBypassFiles(),
-    mode: store.get('bypassMode', 'general')
+    mode: store.get('bypassMode', 'ALT7')
   };
 });
 
@@ -752,6 +786,50 @@ ipcMain.handle('telegram-reset', () => {
 ipcMain.handle('telegram-refresh', async () => {
   await GameFilter.refreshSubscriptionStatus();
   return GameFilter.getStatus();
+});
+
+// ============================================
+// PROVIDER AUTO-DETECTION IPC HANDLERS
+// ============================================
+
+// Определить провайдера и получить рекомендуемый режим
+ipcMain.handle('detect-provider', async () => {
+  try {
+    const recommendation = await ProviderDetector.getRecommendedBypassMode();
+    
+    // Сохраняем результаты автоопределения
+    if (recommendation.autoDetected) {
+      store.set('detectedProvider', recommendation.provider);
+      store.set('bypassMode', recommendation.mode);
+      store.set('providerDetected', true);
+    }
+    
+    return recommendation;
+  } catch (error) {
+    console.error('Provider detection failed:', error);
+    return {
+      provider: 'default',
+      mode: 'ALT7',
+      autoDetected: false,
+      error: error.message
+    };
+  }
+});
+
+// Получить текущий определенный провайдер
+ipcMain.handle('get-detected-provider', () => {
+  return {
+    provider: store.get('detectedProvider', null),
+    mode: store.get('bypassMode', 'ALT7'),
+    detected: store.get('providerDetected', false)
+  };
+});
+
+// Сбросить автоопределение провайдера (для переопределения)
+ipcMain.handle('reset-provider-detection', () => {
+  store.delete('providerDetected');
+  store.delete('detectedProvider');
+  return { success: true };
 });
 
 // ============================================
